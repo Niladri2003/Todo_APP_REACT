@@ -4,11 +4,13 @@ import Logo from "../assets/Logo.png";
 import { useDispatch, useSelector } from "react-redux";
 import Profile from "./Profile";
 import { logout } from "../services/operations/authApi";
+import { SignOutButton,useAuth } from "@clerk/clerk-react";
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
+  const {isSignedIn}=useAuth()
 
   // console.log(token);
   // console.log(process.env.REACT_APP_BASE_URL);
@@ -21,12 +23,12 @@ const Navbar = () => {
 
         <nav className="flex flex-row gap-2 w-full justify-end mr-2 ">
           <Link to="/" className="text-white font-Nunito font-[900]">
-            {token=== null && <p className="bg-[#8ba5fa] hover:bg-[#7390f2] tracking-[2.6px] p-2 rounded-md">
+            {isSignedIn=== false && <p className="bg-[#8ba5fa] hover:bg-[#7390f2] tracking-[2.6px] p-2 rounded-md">
             Home
               
             </p>}
           </Link>
-          {token === null ? (
+          {isSignedIn === false ? (
             <Link to="login" className="text-white font-Nunito font-[900]">
               <p className="bg-[#8ba5fa] hover:bg-[#7390f2] p-2 rounded-md tracking-[2.6px]">
                 {" "}
@@ -35,18 +37,17 @@ const Navbar = () => {
             </Link>
           ) : (
             <Link to="/" className="text-white font-Nunito font-[900]">
-              <div
-                onClick={() => {
-                  dispatch(logout(navigate));
-                }}
-                className="bg-[#8ba5fa] hover:bg-[#7390f2] p-2 rounded-md tracking-[2.6px]"
-              >
-                {" "}
-                LogOut
+              <div>
+                <SignOutButton>
+                  <div  className="bg-[#8ba5fa] hover:bg-[#7390f2] p-2 rounded-md tracking-[2.6px]">
+                    Log Out
+                  </div>
+                </SignOutButton>
+
               </div>
             </Link>
           )}
-          {token !== null && <Profile />}
+          {isSignedIn !== false && <Profile />}
         </nav>
       </div>
     </div>

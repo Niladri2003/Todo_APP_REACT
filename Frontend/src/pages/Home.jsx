@@ -6,27 +6,50 @@ import { apiConnector } from "../services/apiconnector";
 import axios from "axios";
 import { setTodolist } from "../slices/todoSlice";
 import { toast } from "react-hot-toast";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import { setLoading } from "../slices/authSlice";
+
+
+import {useAuth} from "@clerk/clerk-react";
+import {logindispatcher} from "../services/operations/authApi";
 
 const Home = () => {
   const [title, settitle] = useState("");
   const [description, setdescription] = useState("");
   const { token } = useSelector((state) => state.auth);
+  console.log("Token From slice",token)
   const [refresh, setrefresh] = useState(false);
   const { CREATE_TODO, DELETE_TODO, GETALL_TODO } = todoendpoints;
   const user = useSelector((state) => state.profile);
   const todolist = useSelector((state) => state.todolist);
-  // console.log("From slice====", todolist);
-  // console.log("All Task====", tasks);
+
+
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isSignedIn, isLoaded ,userId,sessionId,getToken } = useAuth();
+
+  console.log(useAuth());
+
+
+  useEffect(() => {
+    console.log("UseEffect");
+    const handleSignIn = async () => {
+      if (isSignedIn && isLoaded) {
+        const token = await getToken();
+
+        dispatch(logindispatcher(userId, sessionId,token, navigate));
+      }
+    };
+
+    handleSignIn();
+  }, [isSignedIn]);
 
   //add todo handler
   const handleonSubmit = async (e) => {
     e.preventDefault();
     // console.log(token);
     // console.log(user);
-    if (token === null) {
+    if (isSignedIn === false) {
       toast.error("Log in first to create todo");
       return;
     } else {
@@ -36,8 +59,13 @@ const Home = () => {
         const data = await apiConnector("POST", CREATE_TODO, {
           title,
           description,
-          token,
-        });
+          userId,
+          sessionId,
+          token
+        }, {
+              Authorization :`Bearer ${token}`
+            }
+            );
         toast.success("Todo created");
         settitle("");
         setdescription("");
@@ -94,7 +122,7 @@ const Home = () => {
       <div className="mx-auto flex flex-col w-11/12 items-center justify-center">
         <div
           className={`flex flex-col justify-center items-center gap-y-2 mt-4 lg:w-[80%] w-[100%] display
-          ${token === null ? "hidden" : "display"} }`}
+          ${isSignedIn === false ? "hidden" : "display"} }`}
         >
           <form
             onSubmit={handleonSubmit}
@@ -130,14 +158,14 @@ const Home = () => {
             </button>
           </form>
         </div>
-        {token === null && (
+        {isSignedIn === false && (
           <div className="text-black font-Nunito font-[900]  flex items-center flex-col mt-40">
             <p className="lg:tracking-[3.6px] lg:text-[30px] text-[25px] tracking-[1.5px]">Welcome to Todo APP</p>
             <p className=" lg:text-[27px] text-[18px]">
               {" "}
-              <Link to="login/signup" className="text-[#7a90d7] font-[900]">
-                Sign up
-              </Link>{" "}
+              <Link to="login" className="text-[#7a90d7] font-[900]">
+               Login   {" "}
+              </Link>
               first to create Todo
             </p>
           </div>
